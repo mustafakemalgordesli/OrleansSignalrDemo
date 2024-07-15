@@ -2,7 +2,7 @@
 
 public interface IAgentConnectionGrain : IGrainWithStringKey
 {
-    public Task CreateAgentConnection(AgentConnection agentConnection);
-    public Task<AgentConnection> GetAgentConnection();
-    public Task ClearState();
+    Task CreateAgentConnection(AgentConnection agentConnection);
+    Task<AgentConnection> GetAgentConnection();
+    Task ClearState();
 }
