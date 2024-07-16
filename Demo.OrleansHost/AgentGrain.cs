@@ -1,4 +1,5 @@
 ﻿using Demo.Contracts;
+using MongoDB.Driver.Core.Connections;
 using Orleans.Providers;
 using System.Collections.Generic;
 
@@ -9,13 +10,11 @@ public class AgentGrain : Grain, IAgentGrain
 {
     private readonly IPersistentState<Agent> _state;
     private readonly GrainType _grainType;
-    private IManagementGrain _management;
     public AgentGrain(
-        [PersistentState("agent", "MongoStorage")] IPersistentState<Agent> state, IGrainContext grainContext, IManagementGrain management)
+        [PersistentState("agent", "MongoStorage")] IPersistentState<Agent> state, IGrainContext grainContext)
     {
         _state = state;
         _grainType = grainContext.GrainId.Type;
-        _management = management;
     }
 
     public async Task AddConnectionId(string connectionId)
@@ -47,5 +46,21 @@ public class AgentGrain : Grain, IAgentGrain
     public Task<IdSpan> GetType()
     {
         return Task.FromResult(_grainType.Value);   
+    }
+
+    public async Task AddCustomer(Customer customer)
+    {
+        _state.State.customers.Add(customer);
+        await _state.WriteStateAsync();
+    }
+
+    public async Task RemoveCustomer(string conId)
+    {
+        if (_state.State.customers != null)
+        {
+            var customer = _state.State.customers.FirstOrDefault(x => x.connectionId == conId);
+            _state.State.customers.Remove(customer);
+        }
+        await _state.WriteStateAsync();
     }
 }

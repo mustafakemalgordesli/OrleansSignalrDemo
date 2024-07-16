@@ -8,4 +8,6 @@ public interface IAgentGrain : IGrainWithStringKey
     Task AddConnectionId(string connectionId);
     Task RemoveConnectionId(string connectionId);
     Task<IdSpan> GetType();
+    Task AddCustomer(Customer customer);
+    Task RemoveCustomer(string conId);
 }

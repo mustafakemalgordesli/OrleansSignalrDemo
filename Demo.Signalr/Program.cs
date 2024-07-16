@@ -43,5 +43,7 @@ app.UseHttpsRedirection();
 
 app.MapHub<AgentHub>("/agenthub");
 
+app.MapHub<CustomerHub>("/customerhub");
+
 app.Run();
 

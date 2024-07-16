@@ -51,26 +51,4 @@ public class AgentHub(IClusterClient client) : Hub
             }
         }
     }
-
-    public async Task GetMinCustomer()
-    {
-        var conId = Context.ConnectionId;
-
-        var management = client.GetGrain<IManagementGrain>(0);
-
-        var id = await client.GetGrain<IAgentGrain>("kemal").GetType();
-
-        GrainType type = new GrainType(id);
-
-        List<GrainId> list = await management.GetActiveGrains(type);
-
-        await Clients.Client(conId).SendAsync("Newuser", list.Count);
-
-        for (int i = 0; i < list.Count; i++)
-        {
-            var agentGrain = client.GetGrain<IAgentGrain>(list[i]);
-            var agent = await agentGrain.GetAgent();
-            await Clients.Client(Context.ConnectionId).SendAsync("Newuser", agent.nickname + " " + agent.connectionIds.Count);
-        }
-    }
 }
