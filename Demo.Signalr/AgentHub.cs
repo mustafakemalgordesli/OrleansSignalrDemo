@@ -4,7 +4,13 @@ using Pipelines.Sockets.Unofficial.Arenas;
 
 namespace Demo.Signalr;
 
-public class AgentHub(IClusterClient client) : Hub
+public interface IAgentHub
+{
+    Task SendMessage(string message, Guid id);
+    Task SendMessage(string message);
+}
+
+public class AgentHub(IClusterClient client, IHubContext<CustomerHub, ICustomerHub> customerHub) : Hub<IAgentHub>
 {
     public async Task ConnectAgent(Agent agent) 
     {
@@ -15,7 +21,7 @@ public class AgentHub(IClusterClient client) : Hub
 
         if(agentGrain == null)
         {
-            await Clients.Client(conId).SendAsync("Newuser", "hatalı");
+            await Clients.Client(conId).SendMessage("grain null");
             return;
         }
         
@@ -50,5 +56,12 @@ public class AgentHub(IClusterClient client) : Hub
                 await agentConnectionGrain.ClearState();
             }
         }
+    }
+
+    public async Task ReceiveMessage(string message, string connectionId)
+    {
+        var customerGrain = client.GetGrain<ICustomerGrain>(connectionId);
+        var customer = await customerGrain.GetCustomer();
+        await customerHub.Clients.Client(customer.connectionId).SendMessage(message);
     }
 }

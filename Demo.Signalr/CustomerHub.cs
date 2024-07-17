@@ -2,8 +2,12 @@
 using Microsoft.AspNetCore.SignalR;
 
 namespace Demo.Signalr;
+public interface ICustomerHub
+{
+    Task SendMessage(string message);
+}
 
-public class CustomerHub(IClusterClient client, IHubContext<AgentHub> agentHub) : Hub
+public class CustomerHub(IClusterClient client, IHubContext<AgentHub, IAgentHub> agentHub) : Hub<ICustomerHub>
 {
     public async Task ConnectCustomer(Customer customer)
     {
@@ -56,5 +60,14 @@ public class CustomerHub(IClusterClient client, IHubContext<AgentHub> agentHub) 
         await client.GetGrain<IAgentGrain>(customer.agentNickname).RemoveCustomer(conId);
         await customerGrain.ClearState();
         return;
+    }
+
+    public async Task ReceiveMessage(string message)
+    {
+        var conId = Context.ConnectionId;
+        var customerGrain = client.GetGrain<ICustomerGrain>(conId);
+        var customer = await customerGrain.GetCustomer();
+        var agent = await client.GetGrain<IAgentGrain>(customer.agentNickname).GetAgent();
+        await agentHub.Clients.Clients(agent.connectionIds).SendMessage(message, customer.id);
     }
 }
