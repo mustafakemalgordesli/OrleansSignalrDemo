@@ -41,6 +41,15 @@ public class AgentGrain : Grain, IAgentGrain
             _state.State.connectionIds.Remove(connectionId);
         }
         await _state.WriteStateAsync();
+        if(_state.State?.connectionIds?.Count == 0)
+        {
+            await ClearState();
+        }
+    }
+
+    public async Task ClearState()
+    {
+        await _state.ClearStateAsync();
     }
 
     public Task<IdSpan> GetType()

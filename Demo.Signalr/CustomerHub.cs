@@ -30,7 +30,7 @@ public class CustomerHub(IClusterClient client, IHubContext<AgentHub, IAgentHub>
         {
             var agentGrain = client.GetGrain<IAgentGrain>(list[i]);
             var agent = await agentGrain.GetAgent();
-            if (minAgent == null)
+            if (minAgent == null && agent.nickname != null)
             {
                 minGrain = agentGrain;
                 minAgent = agent;
@@ -50,6 +50,9 @@ public class CustomerHub(IClusterClient client, IHubContext<AgentHub, IAgentHub>
         var customerGrain = client.GetGrain<ICustomerGrain>(conId);
         await customerGrain.CreateCustomer(customer);
         await minGrain.AddCustomer(customer);
+
+        await Clients.Client(conId).SendMessage(minAgent.nickname + " agent'ına bağlanıldı");
+        await agentHub.Clients.Clients(minAgent.connectionIds).SendMessage(conId + " bağlandı");
     }
 
     public override async Task OnDisconnectedAsync(Exception? exception)
@@ -68,6 +71,6 @@ public class CustomerHub(IClusterClient client, IHubContext<AgentHub, IAgentHub>
         var customerGrain = client.GetGrain<ICustomerGrain>(conId);
         var customer = await customerGrain.GetCustomer();
         var agent = await client.GetGrain<IAgentGrain>(customer.agentNickname).GetAgent();
-        await agentHub.Clients.Clients(agent.connectionIds).SendMessage(message, customer.id);
+        await agentHub.Clients.Clients(agent.connectionIds).SendMessage(message, customer.connectionId);
     }
 }

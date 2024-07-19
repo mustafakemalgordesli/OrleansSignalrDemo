@@ -6,7 +6,7 @@ namespace Demo.Signalr;
 
 public interface IAgentHub
 {
-    Task SendMessage(string message, Guid id);
+    Task SendMessage(string message, string conId);
     Task SendMessage(string message);
 }
 

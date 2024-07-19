@@ -10,4 +10,5 @@ public interface IAgentGrain : IGrainWithStringKey
     Task<IdSpan> GetType();
     Task AddCustomer(Customer customer);
     Task RemoveCustomer(string conId);
+    Task ClearState();
 }
