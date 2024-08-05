@@ -1,5 +1,8 @@
 ﻿using Demo.Contracts;
+using Demo.Signalr.Services;
 using Microsoft.AspNetCore.SignalR;
+using RabbitMQ.Client;
+using System.Text;
 
 namespace Demo.Signalr;
 public interface ICustomerHub
@@ -7,52 +10,40 @@ public interface ICustomerHub
     Task SendMessage(string message);
 }
 
-public class CustomerHub(IClusterClient client, IHubContext<AgentHub, IAgentHub> agentHub) : Hub<ICustomerHub>
+public class CustomerHub : Hub<ICustomerHub>
 {
+    private IRabbitmqService rabbitmqService;
+    IClusterClient client;
+    IHubContext<AgentHub, IAgentHub> agentHub;
+    public CustomerHub(IClusterClient client, IHubContext<AgentHub, IAgentHub> agentHub, IRabbitmqService rabbitmqService)
+    {
+        this.agentHub = agentHub;
+        this.client = client;
+        this.rabbitmqService = rabbitmqService;
+        //_channel.QueueDeclare(queue: "matching_queue", durable: false, exclusive: false, autoDelete: false, arguments: null);
+    }
+
     public async Task ConnectCustomer(Customer customer)
     {
         var conId = Context.ConnectionId;
 
-        var management = client.GetGrain<IManagementGrain>(0);
-
-        var grain = client.GetGrain<IAgentGrain>("xkemalrandom");
-
-        var id = await grain.GetType();
-
-        GrainType type = new GrainType(id);
-
-        List<GrainId> list = await management.GetActiveGrains(type);
-
-        IAgentGrain? minGrain = null;
-        Agent? minAgent = null;
-
-        for (int i = 0; i < list.Count; i++)
-        {
-            var agentGrain = client.GetGrain<IAgentGrain>(list[i]);
-            var agent = await agentGrain.GetAgent();
-            if (minAgent == null && agent.nickname != null)
-            {
-                minGrain = agentGrain;
-                minAgent = agent;
-            }
-            if(agent?.nickname != null && agent?.connectionIds.Count < minAgent?.connectionIds.Count)
-            {
-                minGrain = agentGrain;
-                minAgent = agent;
-            }
-        }
-
-        if (minAgent == null || minGrain == null) return;
-
-        customer.agentNickname = minAgent.nickname;
         customer.connectionTime = DateTime.Now;
         customer.connectionId = conId;
         var customerGrain = client.GetGrain<ICustomerGrain>(conId);
         await customerGrain.CreateCustomer(customer);
-        await minGrain.AddCustomer(customer);
 
-        await Clients.Client(conId).SendMessage(minAgent.nickname + " agent'ına bağlanıldı");
-        await agentHub.Clients.Clients(minAgent.connectionIds).SendMessage(conId + " bağlandı");
+        var queueName = "matching_queue";
+        using (var connection = rabbitmqService.GetRabbitMQConnection())
+        {
+            using (var channel = connection.CreateModel())
+            {
+                channel.QueueDeclare(queueName, false, false, false, null);
+
+                channel.BasicPublish("", queueName, null, Encoding.UTF8.GetBytes(conId));
+
+                Console.WriteLine("{0} queue'su üzerine, \"{1}\" mesajı yazıldı.", queueName, conId);
+            }
+        }
     }
 
     public override async Task OnDisconnectedAsync(Exception? exception)

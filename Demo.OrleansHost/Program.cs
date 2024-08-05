@@ -4,7 +4,7 @@ using Orleans.Configuration;
 using System.Net;
 
 var siloPort = int.Parse(args[0]);
-var gatewayPort = int.Parse(args[1]);
+var gatewayPort = int.Parse(args[1]) ;
 
 var host = Host.CreateDefaultBuilder(args)
     .UseOrleans(silo =>
@@ -14,7 +14,7 @@ var host = Host.CreateDefaultBuilder(args)
             options.ClusterId = "dev";
             options.ServiceId = "SignalRService";
         })
-        .UseMongoDBClient("mongodb://docker:mongopw@localhost:49153")
+        .UseMongoDBClient("mongodb://localhost:27017")
         .AddMongoDBGrainStorage(name: "MongoStorage", options =>
         {
             options.DatabaseName = "OrleansDemoDB";

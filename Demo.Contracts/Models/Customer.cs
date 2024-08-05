@@ -12,9 +12,11 @@ public class Customer
     [Id(3)]
     public string phoneNumber { get; set; }
     [Id(4)]
-    public string agentNickname { get; set; }
+    public string? agentNickname { get; set; }
     [Id(5)]
     public DateTime connectionTime { get; set; }
     [Id(6)]
     public string connectionId { get; set; }
+    [Id(7)]
+    public string? groupName { get; set; }
 }

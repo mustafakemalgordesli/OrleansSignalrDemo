@@ -5,4 +5,5 @@ public interface ICustomerGrain : IGrainWithStringKey
     Task CreateCustomer(Customer customer);
     Task<Customer> GetCustomer();
     Task ClearState();
+    Task UpdateAgent(Customer customer);
 }

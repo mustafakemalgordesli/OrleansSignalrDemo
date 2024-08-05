@@ -27,4 +27,11 @@ public class CustomerGrain : Grain, ICustomerGrain
     {
         return Task.FromResult(_state.State);
     }
+
+    public async Task UpdateAgent(Customer customer)
+    {
+        _state.State.agentNickname = customer.agentNickname;
+        _state.State.groupName = customer.groupName;
+        await _state.WriteStateAsync();
+    }
 }

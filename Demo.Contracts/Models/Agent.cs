@@ -13,7 +13,16 @@ public class Agent
     [Id(3)]
     public string lastname { get; set; }
     [Id(4)]
-    public List<Customer> customers { get; set; } = new();
+    public IsStatus IsStatus { get; set; } = IsStatus.Online;
     [Id(5)]
+    public List<Customer> customers { get; set; } = new();
+    [Id(6)]
     public List<string> connectionIds { get; set; } = new();
+}
+
+public enum IsStatus
+{
+    Online= 1,
+    Break=2,
+    Offline=3,
 }

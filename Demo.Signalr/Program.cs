@@ -1,10 +1,12 @@
 using Demo.Signalr;
+using Demo.Signalr.BackgroundServices;
+using Demo.Signalr.Services;
 using Orleans.Configuration;
 using StackExchange.Redis;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddSignalR().AddStackExchangeRedis("127.0.0.1:6379", options => {
+builder.Services.AddSignalR().AddStackExchangeRedis("127.0.0.1:7000", options => {
     options.Configuration.ChannelPrefix = RedisChannel.Literal("MyApp");
 });
 
@@ -20,10 +22,15 @@ builder.Services.AddCors(options =>
         });
 });
 
+builder.Services.Configure<RabbitMqOptions>(builder.Configuration.GetSection("RabbitMQ"));
+builder.Services.AddSingleton<IRabbitmqService, RabbitmqService>();
+builder.Services.AddSingleton<IGroupManager, GroupManager>();
+builder.Services.AddHostedService<MatchingBackgroundService>();
+
 builder.Host.UseOrleansClient(client =>
 {
     client
-    .UseMongoDBClient("mongodb://docker:mongopw@localhost:49153")
+    .UseMongoDBClient("mongodb://localhost:27017")
     .UseMongoDBClustering(options =>
     {
         options.DatabaseName = "ClusterDB";

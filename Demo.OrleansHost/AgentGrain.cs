@@ -72,4 +72,16 @@ public class AgentGrain : Grain, IAgentGrain
         }
         await _state.WriteStateAsync();
     }
+
+    public Task<MatchingStatus> MatchingStatus()
+    {
+        MatchingStatus matchingStatus = new() {
+            IsOnline = true,
+            CustomerCount = _state.State.customers.Count
+        };
+
+        if (_state.State.IsStatus.Equals(IsStatus.Online)) return Task.FromResult(matchingStatus);
+        matchingStatus.IsOnline = false;
+        return Task.FromResult(matchingStatus);
+    }
 }
